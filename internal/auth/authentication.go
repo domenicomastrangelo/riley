@@ -7,7 +7,7 @@ import (
 )
 
 func TokenDefaultExpiryDate() time.Time {
-	return time.Now().Add(time.Hour * 24)
+	return time.Now().UTC().Add(time.Hour * 24)
 }
 
 func CheckToken(tokenString string, secret string) error {
@@ -51,8 +51,8 @@ func GenerateToken(expiryDate time.Time, userID uint64, secret string) (string, 
 		jwt.SigningMethodHS256,
 		jwt.MapClaims{
 			"exp": expiryDate.Unix(),
-			"iat": time.Now().Unix(),
-			"nbt": time.Now().Unix(),
+			"iat": time.Now().UTC().Unix(),
+			"nbt": time.Now().UTC().Unix(),
 			"sub": userID,
 			"iss": "riley",
 		},

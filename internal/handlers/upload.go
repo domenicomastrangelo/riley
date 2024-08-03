@@ -68,7 +68,7 @@ func (h *Handler) Upload(w http.ResponseWriter, r *http.Request) {
 	var expiresAtTime time.Time
 	expiresAt := r.FormValue("expires_at")
 	if expiresAt == "" {
-		expiresAtTime = time.Now().Add(24 * time.Hour)
+		expiresAtTime = time.Now().UTC().Add(24 * time.Hour)
 	} else {
 		expiresAtTime, err = time.Parse(time.RFC3339, expiresAt)
 		if err != nil {

@@ -28,9 +28,9 @@ func TestCreateFile(t *testing.T) {
 	}()
 
 	f := File{
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-		ExpiresAt: time.Now().Add(time.Hour),
+		CreatedAt: time.Now().UTC(),
+		UpdatedAt: time.Now().UTC(),
+		ExpiresAt: time.Now().UTC().Add(time.Hour),
 		Name:      "test.txt",
 		Hash:      "test",
 		UserID:    user.ID,
@@ -75,12 +75,12 @@ func TestCreateFile(t *testing.T) {
 	})
 }
 
-func TestGetFileByID(t *testing.T) {
+func TestGetFileByHash(t *testing.T) {
 	fileContent := []byte("test")
 
 	db := sql.Connect(config.LoadTestConfig())
 
-	user, err := UserCreate("exampleTestGetFileByID@example.com", "password123%A%", db)
+	user, err := UserCreate("exampleTestGetFileByHash@example.com", "password123%A%", db)
 	if err != nil {
 		t.Fatalf("UserCreate returned an error: %s", err)
 	}
@@ -93,9 +93,9 @@ func TestGetFileByID(t *testing.T) {
 	}()
 
 	f := File{
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-		ExpiresAt: time.Now().Add(time.Hour),
+		CreatedAt: time.Now().UTC(),
+		UpdatedAt: time.Now().UTC(),
+		ExpiresAt: time.Now().UTC().Add(time.Hour),
 		Name:      "test.txt",
 		Hash:      "test",
 		Size:      uint64(len([]byte("test"))),
@@ -109,11 +109,11 @@ func TestGetFileByID(t *testing.T) {
 		t.Fatalf("CreateFile returned an error: %s", err)
 	}
 
-	t.Run("get file by ID", func(t *testing.T) {
+	t.Run("get file by hash", func(t *testing.T) {
 		var file2 File
-		file2, err = GetFileByID(file.ID)
+		file2, err = GetFileByHash(file.Hash, db)
 		if err != nil {
-			t.Fatalf("GetFileByID returned an error: %s", err)
+			t.Fatalf("GetFileByHash returned an error: %s", err)
 		}
 
 		if file.ID != file2.ID {
@@ -128,11 +128,17 @@ func TestGetFileByID(t *testing.T) {
 			t.Fatalf("expected file size to be %d, got %d", file.Size, file2.Size)
 		}
 
-		if file.CreatedAt != file2.CreatedAt {
+		expectedCreatedAt := file.CreatedAt.UTC().Format(time.RFC3339)
+		actualCreatedAt := file2.CreatedAt.UTC().Format(time.RFC3339)
+
+		if expectedCreatedAt != actualCreatedAt {
 			t.Fatalf("expected created at time to be %v, got %v", file.CreatedAt, file2.CreatedAt)
 		}
 
-		if file.ExpiresAt != file2.ExpiresAt {
+		actualExpiresAt := file2.ExpiresAt.UTC().Format(time.RFC3339)
+		expectedExpiresAt := file.ExpiresAt.UTC().Format(time.RFC3339)
+
+		if expectedExpiresAt != actualExpiresAt {
 			t.Fatalf("expected expires at time to be %v, got %v", file.ExpiresAt, file2.ExpiresAt)
 		}
 
@@ -154,7 +160,7 @@ func TestGetFilesByUserID(t *testing.T) {
 
 	db := sql.Connect(config.LoadTestConfig())
 
-	user, err := UserCreate("exampleTestGetFileByID@example.com", "password123%A%", db)
+	user, err := UserCreate("exampleTestGetFileByHash@example.com", "password123%A%", db)
 	if err != nil {
 		t.Fatalf("UserCreate returned an error: %s", err)
 	}
@@ -167,9 +173,9 @@ func TestGetFilesByUserID(t *testing.T) {
 	}()
 
 	f := File{
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-		ExpiresAt: time.Now().Add(time.Hour),
+		CreatedAt: time.Now().UTC(),
+		UpdatedAt: time.Now().UTC(),
+		ExpiresAt: time.Now().UTC().Add(time.Hour),
 		Name:      "test2.txt",
 		Hash:      "test2",
 
@@ -183,7 +189,7 @@ func TestGetFilesByUserID(t *testing.T) {
 		t.Fatalf("CreateFile returned an error: %s", err)
 	}
 
-	user2, err := UserCreate("exampleTestGetFileByID2@example.com", "password123%A%", db)
+	user2, err := UserCreate("exampleTestGetFileByHash2@example.com", "password123%A%", db)
 	if err != nil {
 		t.Fatalf("UserCreate returned an error: %s", err)
 	}
@@ -198,9 +204,9 @@ func TestGetFilesByUserID(t *testing.T) {
 	fileContent2 := []byte("test2")
 
 	f2 := File{
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-		ExpiresAt: time.Now().Add(time.Hour),
+		CreatedAt: time.Now().UTC(),
+		UpdatedAt: time.Now().UTC(),
+		ExpiresAt: time.Now().UTC().Add(time.Hour),
 		Name:      "test3.txt",
 		Hash:      "test3",
 		Size:      uint64(len([]byte("test3"))),
@@ -270,7 +276,7 @@ func TestDeleteFile(t *testing.T) {
 
 	db := sql.Connect(config.LoadTestConfig())
 
-	user, err := UserCreate("exampleTestGetFileByID@example.com", "password123%A%", db)
+	user, err := UserCreate("exampleTestGetFileByHash@example.com", "password123%A%", db)
 	if err != nil {
 		t.Fatalf("UserCreate returned an error: %s", err)
 	}
@@ -283,9 +289,9 @@ func TestDeleteFile(t *testing.T) {
 	}()
 
 	f := File{
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-		ExpiresAt: time.Now().Add(time.Hour),
+		CreatedAt: time.Now().UTC(),
+		UpdatedAt: time.Now().UTC(),
+		ExpiresAt: time.Now().UTC().Add(time.Hour),
 		Name:      "test.txt",
 		Hash:      "test4",
 		Size:      uint64(len([]byte("test4"))),
@@ -305,9 +311,9 @@ func TestDeleteFile(t *testing.T) {
 			t.Fatalf("Delete returned an error: %s", err)
 		}
 
-		_, err = GetFileByID(file.ID)
+		_, err = GetFileByHash(file.Hash, db)
 		if err == nil {
-			t.Fatalf("expected GetFileByID to return an error")
+			t.Fatalf("expected GetFileByHash to return an error")
 			return
 		}
 	})

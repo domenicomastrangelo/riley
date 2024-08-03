@@ -50,7 +50,7 @@ func TestUpload(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	token, err := auth.GenerateToken(time.Now().Add(1*time.Hour), user.ID, h.Config.TokenSecret)
+	token, err := auth.GenerateToken(time.Now().UTC().Add(1*time.Hour), user.ID, h.Config.TokenSecret)
 	if err != nil {
 		t.Fatal(err)
 	}

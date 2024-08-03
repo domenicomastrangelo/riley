@@ -10,7 +10,7 @@ func TestCreateText(t *testing.T) {
 	textName := "test"
 	textSize := uint64(len(textContent))
 	userID := uint64(1)
-	expiresAt := time.Now().Add(time.Hour)
+	expiresAt := time.Now().UTC().Add(time.Hour)
 
 	text, err := CreateText(textName, textSize, userID, expiresAt, textContent)
 	if err != nil {
@@ -60,7 +60,7 @@ func TestGetTextByID(t *testing.T) {
 	textName := "test2"
 	textSize := uint64(len(textContent))
 	userID := uint64(1)
-	expiresAt := time.Now().Add(time.Hour)
+	expiresAt := time.Now().UTC().Add(time.Hour)
 
 	text, err := CreateText(textName, textSize, userID, expiresAt, textContent)
 	if err != nil {
@@ -115,7 +115,7 @@ func TestGetTextsByUserID(t *testing.T) {
 	textName := "test3"
 	textSize := uint64(len(textContent))
 	userID := uint64(1)
-	expiresAt := time.Now().Add(time.Hour)
+	expiresAt := time.Now().UTC().Add(time.Hour)
 
 	text, err := CreateText(textName, textSize, userID, expiresAt, textContent)
 	if err != nil {
@@ -184,7 +184,7 @@ func TestTextDelete(t *testing.T) {
 	textName := "test5"
 	textSize := uint64(len(textContent))
 	userID := uint64(1)
-	expiresAt := time.Now().Add(time.Hour)
+	expiresAt := time.Now().UTC().Add(time.Hour)
 
 	text, err := CreateText(textName, textSize, userID, expiresAt, textContent)
 	if err != nil {

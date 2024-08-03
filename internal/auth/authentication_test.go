@@ -14,7 +14,7 @@ import (
 func TestCheckToken(t *testing.T) {
 	wrongToken := "0123456789"
 	secret := "secret"
-	expiryDate := time.Now().Add(time.Hour * 24)
+	expiryDate := time.Now().UTC().Add(time.Hour * 24)
 
 	if err := CheckToken(wrongToken, secret); err == nil {
 		t.Error("Testing check token with wrong token: Wanted err, got nil")
@@ -62,7 +62,7 @@ func TestCheckToken(t *testing.T) {
 
 func TestGenerateToken(t *testing.T) {
 	secret := "secret"
-	expiryDate := time.Now().Add(time.Hour * 24)
+	expiryDate := time.Now().UTC().Add(time.Hour * 24)
 
 	db := sql.Connect(config.LoadTestConfig())
 

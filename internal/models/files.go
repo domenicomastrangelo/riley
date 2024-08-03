@@ -80,7 +80,7 @@ func (f *File) CreateFile(data *[]byte, storageConfig config.StorageConfigInterf
 func createFileHash(data *[]byte) (string, error) {
 	hasher := sha256.New()
 
-	now := fmt.Sprintf("%d", time.Now().UnixNano())
+	now := fmt.Sprintf("%d", time.Now().UTC().UnixNano())
 
 	rnd := ""
 
@@ -112,14 +112,22 @@ func createFileHash(data *[]byte) (string, error) {
 	return hex.EncodeToString(hasher.Sum(nil)), nil
 }
 
-// GetFileByID gets a file by the ID
+// GetFileByID gets a file by the hash
 //
 // Returns the file if it exists
 // Returns an error if the file does not exist
-func GetFileByID(id string) (File, error) {
+func GetFileByHash(hash string, db *sql.DB) (File, error) {
 	file := File{}
 
-	return file, errors.New("not implemented")
+	query := "SELECT id, created_at, updated_at, expires_at, name, hash, size, user_id FROM files WHERE hash = $1"
+	err := db.QueryRow(query, hash).Scan(&file.ID, &file.CreatedAt, &file.UpdatedAt, &file.ExpiresAt, &file.Name, &file.Hash, &file.Size, &file.UserID)
+	if err != nil && err != sql.ErrNoRows {
+		return File{}, err
+	} else if err == sql.ErrNoRows {
+		return File{}, errors.New("file does not exist")
+	}
+
+	return file, nil
 }
 
 // Delete deletes a file from the database using the ID
