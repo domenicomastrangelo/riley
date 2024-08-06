@@ -112,7 +112,7 @@ func createFileHash(data *[]byte) (string, error) {
 	return hex.EncodeToString(hasher.Sum(nil)), nil
 }
 
-// GetFileByID gets a file by the hash
+// GetFileByHash gets a file by the hash
 //
 // Returns the file if it exists
 // Returns an error if the file does not exist
