@@ -18,6 +18,12 @@ func TestCreateText(t *testing.T) {
 	if err != nil {
 		t.Fatalf("UserCreate returned an error: %s", err)
 	}
+	defer func() {
+		err = user.Delete(false, db)
+		if err != nil {
+			t.Fatalf("Delete returned an error: %s", err)
+		}
+	}()
 
 	expiresAt := time.Now().UTC().Add(time.Hour)
 
