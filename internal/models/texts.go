@@ -120,10 +120,18 @@ func validateText(name string, userID uint64, expiresAt time.Time, data []byte) 
 //
 // Returns the text if it exists
 // Returns an error if the text does not exist
-func GetTextByID(id string) (Text, error) {
+func GetTextByHash(hash string, db *sql.DB) (Text, error) {
 	text := Text{}
 
-	return text, errors.New("not implemented")
+	query := "SELECT id, created_at, updated_at, expires_at, name, hash, size, user_id FROM texts WHERE hash = $1"
+	err := db.QueryRow(query, hash).Scan(&text.ID, &text.CreatedAt, &text.UpdatedAt, &text.ExpiresAt, &text.Name, &text.Hash, &text.Size, &text.UserID)
+	if err != nil && err != sql.ErrNoRows {
+		return Text{}, err
+	} else if err == sql.ErrNoRows {
+		return Text{}, errors.New("text does not exist")
+	}
+
+	return text, nil
 }
 
 // Delete deletes a text from the database using the ID
@@ -143,8 +151,25 @@ func (t *Text) Delete(db *sql.DB) error {
 //
 // Returns a list of texts if they exist
 // Returns an error if the texts do not exist
-func GetTextsByUserID(id uint64) ([]Text, error) {
+func GetTextsByUserID(id uint64, db *sql.DB) ([]Text, error) {
 	texts := []Text{}
 
-	return texts, errors.New("not implemented")
+	query := "SELECT id, created_at, updated_at, expires_at, name, hash, size, user_id FROM texts WHERE user_id = $1"
+
+	rows, err := db.Query(query, id)
+	if err != nil && err != sql.ErrNoRows {
+		return []Text{}, err
+	}
+
+	for rows.Next() {
+		var text Text
+		err := rows.Scan(&text.ID, &text.CreatedAt, &text.UpdatedAt, &text.ExpiresAt, &text.Name, &text.Hash, &text.Size, &text.UserID)
+		if err != nil {
+			return []Text{}, err
+		}
+
+		texts = append(texts, text)
+	}
+
+	return texts, nil
 }

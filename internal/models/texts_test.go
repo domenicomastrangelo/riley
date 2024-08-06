@@ -77,18 +77,29 @@ func TestGetTextByID(t *testing.T) {
 
 	textContent := []byte("test2")
 	textName := "test2"
-	userID := uint64(1)
+
+	user, err := UserCreate("testgettextbyid@example.com", "password123%%A", db)
+	if err != nil {
+		t.Fatalf("UserCreate returned an error: %s", err)
+	}
+	defer func() {
+		err = user.Delete(false, db)
+		if err != nil {
+			t.Fatalf("Delete returned an error: %s", err)
+		}
+	}()
+
 	expiresAt := time.Now().UTC().Add(time.Hour)
 
-	text, err := CreateText(textName, userID, expiresAt, textContent, db)
+	text, err := CreateText(textName, user.ID, expiresAt, textContent, db)
 	if err != nil {
 		t.Fatalf("CreateText returned an error: %s", err)
 	}
 
 	t.Run("check text properties", func(t *testing.T) {
-		text2, err := GetTextByID(text.ID)
+		text2, err := GetTextByHash(text.Hash, db)
 		if err != nil {
-			t.Fatalf("GetTextByID returned an error: %s", err)
+			t.Fatalf("GetTextByHash returned an error: %s", err)
 		}
 
 		if text.ID != text2.ID {
@@ -105,15 +116,18 @@ func TestGetTextByID(t *testing.T) {
 			t.Fatalf("expected text size to be %d, got %d", expectedSize, text.Size)
 		}
 
-		if text.UserID != userID {
-			t.Fatalf("expected user ID to be %d, got %d", userID, text.UserID)
+		if text.UserID != user.ID {
+			t.Fatalf("expected user ID to be %d, got %d", user.ID, text.UserID)
 		}
 
 		if text.CreatedAt != text2.CreatedAt {
 			t.Fatalf("expected created at time to be %v, got %v", text.CreatedAt, text2.CreatedAt)
 		}
 
-		if text.ExpiresAt != text2.ExpiresAt {
+		expectedExpiresAt1 := text.ExpiresAt.Format(time.RFC3339)
+		expectedExpiresAt2 := text2.ExpiresAt.Format(time.RFC3339)
+
+		if expectedExpiresAt1 != expectedExpiresAt2 {
 			t.Fatalf("expected expires at time to be %v, got %v", text.ExpiresAt, text2.ExpiresAt)
 		}
 
@@ -135,21 +149,43 @@ func TestGetTextsByUserID(t *testing.T) {
 
 	textContent := []byte("test3")
 	textName := "test3"
-	userID := uint64(1)
+
+	user, err := UserCreate("testgettextsbyuserid@example.com", "password123%%A", db)
+	if err != nil {
+		t.Fatalf("UserCreate returned an error: %s", err)
+	}
+	defer func() {
+		err = user.Delete(false, db)
+		if err != nil {
+			t.Fatalf("Delete returned an error: %s", err)
+		}
+	}()
+
+	otherUser, err := UserCreate("othertestgettextbyuserid@example.com", "password123%%A", db)
+	if err != nil {
+		t.Fatalf("UserCreate returned an error: %s", err)
+	}
+	defer func() {
+		err = otherUser.Delete(false, db)
+		if err != nil {
+			t.Fatalf("Delete returned an error: %s", err)
+		}
+	}()
+
 	expiresAt := time.Now().UTC().Add(time.Hour)
 
-	text, err := CreateText(textName, userID, expiresAt, textContent, db)
+	text, err := CreateText(textName, user.ID, expiresAt, textContent, db)
 	if err != nil {
 		t.Fatalf("CreateText returned an error: %s", err)
 	}
 
-	text2, err := CreateText("test4", userID+1, expiresAt, []byte("test4"), db)
+	text2, err := CreateText("test4", otherUser.ID, expiresAt, []byte("test4"), db)
 	if err != nil {
 		t.Fatalf("CreateText returned an error: %s", err)
 	}
 
 	t.Run("check text properties", func(t *testing.T) {
-		texts, err := GetTextsByUserID(userID)
+		texts, err := GetTextsByUserID(user.ID, db)
 		if err != nil {
 			t.Fatalf("GetTextsByUserID returned an error: %s", err)
 		}
@@ -180,7 +216,10 @@ func TestGetTextsByUserID(t *testing.T) {
 			t.Fatalf("expected created at time to be %v, got %v", text.CreatedAt, texts[0].CreatedAt)
 		}
 
-		if text.ExpiresAt != texts[0].ExpiresAt {
+		expectedExpiresAt1 := text.ExpiresAt.Format(time.RFC3339)
+		expectedExpiresAt2 := texts[0].ExpiresAt.Format(time.RFC3339)
+
+		if expectedExpiresAt1 != expectedExpiresAt2 {
 			t.Fatalf("expected expires at time to be %v, got %v", text.ExpiresAt, texts[0].ExpiresAt)
 		}
 
@@ -207,10 +246,21 @@ func TestTextDelete(t *testing.T) {
 
 	textContent := []byte("test5")
 	textName := "test5"
-	userID := uint64(1)
+
+	user, err := UserCreate("testtextdelete@example.com", "password123%%A", db)
+	if err != nil {
+		t.Fatalf("UserCreate returned an error: %s", err)
+	}
+	defer func() {
+		err = user.Delete(false, db)
+		if err != nil {
+			t.Fatalf("Delete returned an error: %s", err)
+		}
+	}()
+
 	expiresAt := time.Now().UTC().Add(time.Hour)
 
-	text, err := CreateText(textName, userID, expiresAt, textContent, db)
+	text, err := CreateText(textName, user.ID, expiresAt, textContent, db)
 	if err != nil {
 		t.Fatalf("CreateText returned an error: %s", err)
 	}
@@ -221,7 +271,7 @@ func TestTextDelete(t *testing.T) {
 			t.Fatalf("Delete returned an error: %s", err)
 		}
 
-		_, err = GetTextByID(text.ID)
+		_, err = GetTextByHash(text.ID, db)
 		if err == nil {
 			t.Fatalf("expected GetTextByID to return an error, got nil")
 		}
