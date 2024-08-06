@@ -13,10 +13,7 @@ func (h *Handler) Signup(w http.ResponseWriter, r *http.Request) {
 	jsonBody := &struct {
 		Email    string `json:"email"`
 		Password string `json:"password"`
-	}{
-		Email:    `json:"email"`,
-		Password: `json:"password"`,
-	}
+	}{}
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
