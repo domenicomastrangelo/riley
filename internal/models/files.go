@@ -156,8 +156,26 @@ func (f *File) Delete(c config.StorageConfigInterface, db *sql.DB) error {
 //
 // Returns a list of files if they exist
 // Returns an error if the files do not exist
-func GetFilesByUserID(id uint64) ([]File, error) {
+func GetFilesByUserID(id uint64, db *sql.DB) ([]File, error) {
 	files := []File{}
 
-	return files, errors.New("not implemented")
+	query := "SELECT id, created_at, updated_at, expires_at, name, hash, size, user_id FROM files WHERE user_id = $1"
+	rows, err := db.Query(query, id)
+	if err != nil && err != sql.ErrNoRows {
+		return []File{}, err
+	} else if err == sql.ErrNoRows {
+		return []File{}, nil
+	}
+
+	for rows.Next() {
+		var file File
+		err := rows.Scan(&file.ID, &file.CreatedAt, &file.UpdatedAt, &file.ExpiresAt, &file.Name, &file.Hash, &file.Size, &file.UserID)
+		if err != nil {
+			return []File{}, err
+		}
+
+		files = append(files, file)
+	}
+
+	return files, nil
 }

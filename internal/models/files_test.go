@@ -220,7 +220,7 @@ func TestGetFilesByUserID(t *testing.T) {
 
 	t.Run("get files by user ID", func(t *testing.T) {
 		var files []File
-		files, err = GetFilesByUserID(f.UserID)
+		files, err = GetFilesByUserID(f.UserID, db)
 		if err != nil {
 			t.Fatalf("GetFilesByUserID returned an error: %s", err)
 		}
@@ -249,7 +249,10 @@ func TestGetFilesByUserID(t *testing.T) {
 			t.Fatalf("expected created at time to be %v, got %v", file.CreatedAt, files[0].CreatedAt)
 		}
 
-		if files[0].ExpiresAt != file.ExpiresAt {
+		expectedExpiresAt := file.ExpiresAt.UTC().Format(time.RFC3339)
+		actualExpiresAt := files[0].ExpiresAt.UTC().Format(time.RFC3339)
+
+		if expectedExpiresAt != actualExpiresAt {
 			t.Fatalf("expected expires at time to be %v, got %v", file.ExpiresAt, files[0].ExpiresAt)
 		}
 
