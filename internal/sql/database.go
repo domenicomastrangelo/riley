@@ -81,7 +81,9 @@ func runTextsMigration(db *sql.DB) {
 			updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			deleted_at TIMESTAMP,
 			expires_at TIMESTAMP,
-			content TEXT NOT NULL,
+			data TEXT NOT NULL,
+			name VARCHAR(255) NOT NULL,
+			size BIGINT NOT NULL,
 			hash VARCHAR(255) NOT NULL UNIQUE,
 			user_id BIGINT NOT NULL,
 			FOREIGN KEY (user_id) REFERENCES users(id)

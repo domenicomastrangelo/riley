@@ -3,16 +3,25 @@ package models
 import (
 	"testing"
 	"time"
+
+	"riley/internal/config"
+	"riley/internal/sql"
 )
 
 func TestCreateText(t *testing.T) {
+	db := sql.Connect(config.LoadTestConfig())
+
 	textContent := []byte("test")
 	textName := "test"
-	textSize := uint64(len(textContent))
-	userID := uint64(1)
+
+	user, err := UserCreate("testcreatetext@example.com", "password123%%A", db)
+	if err != nil {
+		t.Fatalf("UserCreate returned an error: %s", err)
+	}
+
 	expiresAt := time.Now().UTC().Add(time.Hour)
 
-	text, err := CreateText(textName, textSize, userID, expiresAt, textContent)
+	text, err := CreateText(textName, user.ID, expiresAt, textContent, db)
 	if err != nil {
 		t.Fatalf("CreateText returned an error: %s", err)
 	}
@@ -26,12 +35,14 @@ func TestCreateText(t *testing.T) {
 			t.Errorf("expected text name to be %s, got %s", textName, text.Name)
 		}
 
-		if text.Size != textSize {
-			t.Errorf("expected text size to be %d, got %d", textSize, text.Size)
+		expectedSize := uint64(len(textContent))
+
+		if text.Size != expectedSize {
+			t.Errorf("expected text size to be %d, got %d", expectedSize, text.Size)
 		}
 
-		if text.UserID != userID {
-			t.Errorf("expected user ID to be %d, got %d", userID, text.UserID)
+		if text.UserID != user.ID {
+			t.Errorf("expected user ID to be %d, got %d", user.ID, text.UserID)
 		}
 
 		if text.CreatedAt.IsZero() {
@@ -48,7 +59,7 @@ func TestCreateText(t *testing.T) {
 	})
 
 	t.Run("delete text", func(t *testing.T) {
-		err = text.Delete()
+		err = text.Delete(db)
 		if err != nil {
 			t.Fatalf("Delete returned an error: %s", err)
 		}
@@ -56,13 +67,14 @@ func TestCreateText(t *testing.T) {
 }
 
 func TestGetTextByID(t *testing.T) {
+	db := sql.Connect(config.LoadTestConfig())
+
 	textContent := []byte("test2")
 	textName := "test2"
-	textSize := uint64(len(textContent))
 	userID := uint64(1)
 	expiresAt := time.Now().UTC().Add(time.Hour)
 
-	text, err := CreateText(textName, textSize, userID, expiresAt, textContent)
+	text, err := CreateText(textName, userID, expiresAt, textContent, db)
 	if err != nil {
 		t.Fatalf("CreateText returned an error: %s", err)
 	}
@@ -81,8 +93,10 @@ func TestGetTextByID(t *testing.T) {
 			t.Fatalf("expected text name to be %s, got %s", textName, text.Name)
 		}
 
-		if text.Size != textSize {
-			t.Fatalf("expected text size to be %d, got %d", textSize, text.Size)
+		expectedSize := uint64(len(textContent))
+
+		if text.Size != expectedSize {
+			t.Fatalf("expected text size to be %d, got %d", expectedSize, text.Size)
 		}
 
 		if text.UserID != userID {
@@ -103,7 +117,7 @@ func TestGetTextByID(t *testing.T) {
 	})
 
 	t.Run("delete text", func(t *testing.T) {
-		err = text.Delete()
+		err = text.Delete(db)
 		if err != nil {
 			t.Fatalf("Delete returned an error: %s", err)
 		}
@@ -111,18 +125,19 @@ func TestGetTextByID(t *testing.T) {
 }
 
 func TestGetTextsByUserID(t *testing.T) {
+	db := sql.Connect(config.LoadTestConfig())
+
 	textContent := []byte("test3")
 	textName := "test3"
-	textSize := uint64(len(textContent))
 	userID := uint64(1)
 	expiresAt := time.Now().UTC().Add(time.Hour)
 
-	text, err := CreateText(textName, textSize, userID, expiresAt, textContent)
+	text, err := CreateText(textName, userID, expiresAt, textContent, db)
 	if err != nil {
 		t.Fatalf("CreateText returned an error: %s", err)
 	}
 
-	text2, err := CreateText("test4", uint64(len([]byte("test4"))), userID+1, expiresAt, []byte("test4"))
+	text2, err := CreateText("test4", userID+1, expiresAt, []byte("test4"), db)
 	if err != nil {
 		t.Fatalf("CreateText returned an error: %s", err)
 	}
@@ -145,8 +160,10 @@ func TestGetTextsByUserID(t *testing.T) {
 			t.Fatalf("expected text name to be %s, got %s", text.Name, texts[0].Name)
 		}
 
-		if text.Size != texts[0].Size {
-			t.Fatalf("expected text size to be %d, got %d", text.Size, texts[0].Size)
+		expectedSize := uint64(len(textContent))
+
+		if expectedSize != texts[0].Size {
+			t.Fatalf("expected text size to be %d, got %d", expectedSize, texts[0].Size)
 		}
 
 		if text.UserID != texts[0].UserID {
@@ -167,12 +184,12 @@ func TestGetTextsByUserID(t *testing.T) {
 	})
 
 	t.Run("delete text", func(t *testing.T) {
-		err = text.Delete()
+		err = text.Delete(db)
 		if err != nil {
 			t.Fatalf("Delete returned an error: %s", err)
 		}
 
-		err = text2.Delete()
+		err = text2.Delete(db)
 		if err != nil {
 			t.Fatalf("Delete returned an error: %s", err)
 		}
@@ -180,19 +197,20 @@ func TestGetTextsByUserID(t *testing.T) {
 }
 
 func TestTextDelete(t *testing.T) {
+	db := sql.Connect(config.LoadTestConfig())
+
 	textContent := []byte("test5")
 	textName := "test5"
-	textSize := uint64(len(textContent))
 	userID := uint64(1)
 	expiresAt := time.Now().UTC().Add(time.Hour)
 
-	text, err := CreateText(textName, textSize, userID, expiresAt, textContent)
+	text, err := CreateText(textName, userID, expiresAt, textContent, db)
 	if err != nil {
 		t.Fatalf("CreateText returned an error: %s", err)
 	}
 
 	t.Run("delete text", func(t *testing.T) {
-		err = text.Delete()
+		err = text.Delete(db)
 		if err != nil {
 			t.Fatalf("Delete returned an error: %s", err)
 		}
